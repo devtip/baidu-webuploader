@@ -3,7 +3,6 @@
     $(function() {
         var $wrap = $('#uploader'),
 
-
             $queueList = $wrap.find( '.queueList' );
 
             // 图片容器
@@ -13,7 +12,7 @@
             // 状态栏，包括进度和控制按钮
             $statusBar = $wrap.find( '.statusBar' ),
 
-            // 文件总体选择信息。
+            // 文件总体选择信息
             $info = $statusBar.find( '.info' ),
 
             // 上传按钮
@@ -31,12 +30,16 @@
             // 添加的文件总大小
             fileSize = 0,
 
+            // ********** 图片大小相关逻辑 S ************
+
             // 优化retina, 在retina下这个值是2
             ratio = window.devicePixelRatio || 1,
 
             // 缩略图大小
             thumbnailWidth = 110 * ratio,
             thumbnailHeight = 110 * ratio,
+
+            // ********** 图片大小相关逻辑 E ************
 
             // 可能有pedding, ready, uploading, confirm, done.
             state = 'pedding',
@@ -63,12 +66,13 @@
 
   
             chunked: false,
+            // chunked: true,
             chunkSize: 512 * 1024,
 
             server: 'http://localhost:8888/fileupload.php',
 
 
-
+            // // 接受的文件类型
             // accept: {
             //     title: 'Images',
             //     extensions: 'gif,jpg,jpeg,bmp,png',
@@ -82,7 +86,7 @@
         });
 
 
-
+        // WebUploader内部会在uploader实例ready的时候触发dialogOpen事件
         uploader.on('dialogOpen', function() {
             console.log('here');
         });
@@ -107,16 +111,23 @@
                     '<p class="progress"><span></span></p>' +
                     '</li>' ),
 
-
                 // 每个文件的操作面板
                 $btns = $('<div class="file-panel">' +
                     '<span class="cancel">删除</span>' +
                     '<span class="rotateRight">向右旋转</span>' +
                     '<span class="rotateLeft">向左旋转</span></div>').appendTo( $li ),
+
+                // 文件总体上传进度相关的DOM元素
                 $prgress = $li.find('p.progress span'),
+
+                // 专门用来存放base64编码图片的容器
                 $wrap = $li.find( 'p.imgWrap' ),
+
+                // 创建一个用来显示错误信息的jQuery容器
+                // 这个主要是在图片上传失败才会用到
                 $info = $('<p class="error"></p>'),
 
+                // 显示错误信息
                 showError = function( code ) {
                     switch( code ) {
                         case 'exceed_size':
@@ -151,15 +162,27 @@
                     }
 
                     img = $('<img src="'+src+'">');
+
+                    // 先从DOM中移除集合中匹配元素的所有子节点
                     $wrap.empty().append( img );
                 }, thumbnailWidth, thumbnailHeight );
 
                 // 存储文件的进度信息
+                // - file.size ==> 文件大小
+                // - 0         ==> 文件已加载的百分比
                 percentages[ file.id ] = [ file.size, 0 ];
+
+                // 设置文件的旋转角度
                 file.rotation = 0;
             }
 
+
+
+            // ******** 状态发生改变就会触发 ***********
+            // WebUploader内部会触发statuschange
             file.on('statuschange', function( cur, prev ) {
+                console.log(prev, '=>', cur);
+
                 if ( prev === 'progress' ) {
                     $prgress.hide().width(0);
                 } else if ( prev === 'queued' ) {
@@ -172,13 +195,13 @@
                     console.log( file.statusText );
                     showError( file.statusText );
                     percentages[ file.id ][ 1 ] = 1;
-                } else if ( cur === 'interrupt' ) {
+                } else if ( cur === 'interrupt' ) { // 上传被中断
                     showError( 'interrupt' );
                 } else if ( cur === 'queued' ) {
                     $info.remove();
                     $prgress.css('display', 'block');
                     percentages[ file.id ][ 1 ] = 0;
-                } else if ( cur === 'progress' ) {
+                } else if ( cur === 'progress' ) { // 上传处理中
                     $info.remove();
                     $prgress.css('display', 'block');
                 } else if ( cur === 'complete' ) {
@@ -189,17 +212,6 @@
                 }
 
                 $li.removeClass( 'state-' + prev ).addClass( 'state-' + cur );
-            });
-
-            // ******** 移动端不支持mouse相关的事件 *********
-            // 显示文件操作工具栏
-            $li.on( 'mouseenter', function() {
-                $btns.stop().animate({height: 30});
-            });
-
-            // 隐藏文件操作工具栏
-            $li.on( 'mouseleave', function() {
-                $btns.stop().animate({height: 0});
             });
 
 
@@ -239,6 +251,9 @@
             $li.appendTo( $queue );
         }
 
+
+
+
         // 负责view的销毁
         function removeFile( file ) {
             // 根据文件id找到对应的li容器
@@ -256,6 +271,9 @@
                 .end().remove();
         }
 
+
+
+
         // 更新文件上传总进度
         function updateTotalProgress() {
             var loaded = 0,
@@ -264,8 +282,8 @@
                 percent;
 
             $.each( percentages, function( k, v ) {
-                total  += v[ 0 ];
-                loaded += v[ 0 ] * v[ 1 ];
+                total  += v[ 0 ];          // 总文件大小
+                loaded += v[ 0 ] * v[ 1 ]; // 已上传的文件大小
             } );
 
             percent = total ? loaded / total : 0;
@@ -276,40 +294,13 @@
             // 更新上传进度条
             spans.eq( 1 ).css( 'width', Math.round( percent * 100 ) + '%' );
 
-            // 更新状态
-            updateStatus();
         }
 
-        function updateStatus() {
-            var text = '', stats;
-
-            if ( state === 'ready' ) {
-                text = '选中' + fileCount + '张图片，共' +
-                        WebUploader.formatSize( fileSize ) + '。';
-            } else if ( state === 'confirm' ) {
-                stats = uploader.getStats();
-                if ( stats.uploadFailNum ) {
-                    text = '已成功上传' + stats.successNum+ '张照片至XX相册，'+
-                        stats.uploadFailNum + '张照片上传失败，<a class="retry" href="#">重新上传</a>失败图片或<a class="ignore" href="#">忽略</a>'
-                }
-
-            } else {
-                stats = uploader.getStats();
-                text = '共' + fileCount + '张（' +
-                        WebUploader.formatSize( fileSize )  +
-                        '），已上传' + stats.successNum + '张';
-
-                if ( stats.uploadFailNum ) {
-                    text += '，失败' + stats.uploadFailNum + '张';
-                }
-            }
-
-            $info.html( text );
-        }
 
         function setState( val ) {
             var file, stats;
 
+            // 状态相同的时候，避免做不必要的操作
             if ( val === state ) {
                 return;
             }
@@ -368,12 +359,12 @@
                     break;
             }
 
-            updateStatus();
+            // updateStatus();
         }
 
         // 当文件上传过程中触发
         uploader.on('uploadProgress', function( file, percentage ) {
-            var $li = $('#'+file.id),
+            var $li      = $('#' + file.id),
                 $percent = $li.find('.progress span');
 
             $percent.css( 'width', percentage * 100 + '%' );
@@ -382,7 +373,7 @@
         });
 
         // 当文件添加进来触发
-        uploader.onFileQueued = function( file ) {
+        uploader.on('fileQueued', function( file ) {
             fileCount++;
             fileSize += file.size;
 
@@ -392,15 +383,20 @@
                 $statusBar.show();
             }
 
-            addFile( file );
-            setState( 'ready' );
-            updateTotalProgress();
-        };
 
-        uploader.onFileDequeued = function( file ) {
+            // 创建单个上传文件的视图
+            addFile( file );
+            // 设置状态
+            setState( 'ready' );
+            // 更新上传进度
+            updateTotalProgress();
+        });
+
+        uploader.on('fileDequeued', function( file ) {
             fileCount--;
             fileSize -= file.size;
 
+            // 上传文件数目为0的时候触发
             if ( !fileCount ) {
                 setState( 'pedding' );
             }
@@ -408,7 +404,7 @@
             removeFile( file );
             updateTotalProgress();
 
-        };
+        });
 
 
         //一个简单的状态机
@@ -431,7 +427,7 @@
         });
 
         uploader.onError = function( code ) {
-            console.log( 'Eroor: ' + code );
+            console.log( 'Error: ' + code );
         };
 
         $upload.on('click', function() {
@@ -448,15 +444,12 @@
             }
         });
 
-        $info.on( 'click', '.retry', function() {
-            uploader.retry();
-        } );
 
-        $info.on( 'click', '.ignore', function() {
-            console.log( 'todo' );
-        } );
-
+        // 设置上传按钮的状态
         $upload.addClass( 'state-' + state );
+
+
+        // 更新上传进度
         updateTotalProgress();
     });
 

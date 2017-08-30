@@ -4977,6 +4977,7 @@
     // WhiteBalance : Auto white balance
     // FocalLengthIn35mmFilm : 35
     // SceneCaptureType : Standard
+    /*
     define('runtime/html5/imagemeta/exif',[
         'base',
         'runtime/html5/imagemeta'
@@ -5244,6 +5245,9 @@
         ImageMeta.parsers[ 0xffe1 ].push( EXIF.parseExifData );
         return EXIF;
     });
+    */
+
+
     /**
      * @fileOverview Image
      */
@@ -5891,7 +5895,7 @@
         // 'runtime/html5/dnd',
         // 'runtime/html5/filepaste',
         'runtime/html5/filepicker',
-        'runtime/html5/imagemeta/exif',
+        // 'runtime/html5/imagemeta/exif',
         'runtime/html5/image',
         'runtime/html5/transport'
     ], function( Base ) {
