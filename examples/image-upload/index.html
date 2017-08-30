@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>WebUploader演示</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+    <link rel="stylesheet" href="../../css/webuploader.css" />
+    <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+    <div id="wrapper">
+        <div id="container">
+            <!--头部，相册选择和格式选择-->
+
+            <div id="uploader">
+                
+                <!-- 队列列表 -->
+                <div class="queueList">
+                    <div id="dndArea" class="placeholder">
+                        <div id="filePicker">点击选择图片</div>
+                        <p>单次最多可选300张</p>
+                    </div>
+                </div>
+
+                <!-- 状态栏 -->
+                <div class="statusBar" style="display:none;">
+                    <div class="progress">
+                        <span class="text">0%</span>
+                        <span class="percentage"></span>
+                    </div>
+                    <div class="info"></div>
+                    <div class="btns">
+                        <div id="filePicker2"></div><div class="uploadBtn">开始上传</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./jquery.js"></script>
+    <script src="../../dist/webuploader.js"></script>
+    <script src="./upload.js"></script>
+</body>
+</html>
