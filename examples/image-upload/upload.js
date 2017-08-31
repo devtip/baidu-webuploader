@@ -293,7 +293,6 @@
 
             // 更新上传进度条
             spans.eq( 1 ).css( 'width', Math.round( percent * 100 ) + '%' );
-
         }
 
 
@@ -305,6 +304,7 @@
                 return;
             }
 
+            // 上传按钮样式操作逻辑
             $upload.removeClass( 'state-' + state );
             $upload.addClass( 'state-' + val );
             state = val;
@@ -373,7 +373,7 @@
         });
 
         // 当文件添加进来触发
-        uploader.on('fileQueued', function( file ) {
+        uploader.on('fileQueued', function __fileQueued__( file ) {
             fileCount++;
             fileSize += file.size;
 
